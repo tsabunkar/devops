@@ -1,4 +1,4 @@
-# Jenkins
+# CI-CD process using Jenkins in EC2 instance
 
 ## Create key-pairs in Ec2
 
@@ -36,7 +36,7 @@
   - \$ chmod 400 Tejas-ec2keypair.pem
   - \$ ssh -i "Tejas-ec2keypair.pem" ec2-user@ec2-3-98-121-42.ca-central-1.compute.amazonaws.com
 
-## Start local EC2 Instance in personal laptop and install,start Jenkins
+## Start local EC2 Instance in personal laptop and install,start Jenkins in Master Ec2 Instance
 
 - Once logged to ec2 instance using ssh client from local
 - \$ sudo su -
@@ -68,3 +68,8 @@
   - save and continue
   - save and finish
   - start using jenkins
+- NOTE: Don't terminate the ec2 instance, just stop instance (this will not delete the setup)
+
+## Adding slaves to Jenkins master
+
+## Adding plugins
