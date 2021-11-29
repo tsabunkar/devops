@@ -69,6 +69,8 @@
   - save and finish
   - start using jenkins
 - NOTE: Don't terminate the ec2 instance, just stop instance (this will not delete the setup)
+  - Instance state: Stop Instance
+  - Stop
 
 ## Adding slaves to Jenkins master
 
