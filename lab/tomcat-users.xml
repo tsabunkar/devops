@@ -1,0 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
+<tomcat-users>
+    <user username="tejas-tomcat" password="tomcat" roles="manager-gui,managemanager-gui,manager-status,manager-script" />
+</tomcat-users>

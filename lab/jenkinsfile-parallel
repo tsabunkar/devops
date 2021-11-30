@@ -1,0 +1,45 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Non-Parallel Stage') {
+            agent {
+                label 'AWS_Instance_Node'
+            }
+
+            steps {
+                echo 'This stage shall be executed first!'
+            }
+        }
+
+        stage('Build and Run Unit Tests') {
+            steps {
+                echo 'Building the Checked-out Project'
+            }
+        }
+
+        stage('Integration-Test') {
+            parallel {
+                stage('Integration Testing On Agent') {
+                    agent {
+                        label 'AWS_Instance_Node'
+                    }
+
+                    steps {
+                        echo 'Integration Tests are being executed on Agent!'
+                    }
+                }
+
+                stage('Integration Testing On Master') {
+                    agent {
+                        label 'master'
+                    }
+
+                    steps {
+                        echo 'Integration Tests are being executed on master!'
+                    }
+                }
+            }
+        }
+    }
+}

@@ -74,4 +74,269 @@
 
 ## Adding slaves to Jenkins master
 
-## Adding plugins
+- First start the master ec2 instance
+  - EC2 > start instance --> Instance state : Running
+  - Please NOTE: public Ipv4 address keeps changing, for every new instance --> so please depend on DNS name !!
+  - \$ sudo ssh -i "Tejas-ec2keypair.pem" ec2-user@ec2-35-183-206-183.ca-central-1.compute.amazonaws.com
+  - \$ http://ec2-35-183-206-183.ca-central-1.compute.amazonaws.com:8080/login?from=%2F
+  - Jenkins login:
+    - user: tejas-admin
+    - Password: 1234
+- Install and Configure Slave:
+  - Launch EC2 instance
+  - Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type
+  - t3 small
+  - Configure instance details :
+    - Auto-assign Public IP- Enable
+    - DNS Hostname: Enable resource-based IPv4 (A record) DNS requests
+  - Add storage
+    - Size: 16 GB
+  - Add tags
+    - key:vale ==> Name: Tejas-Jenkins-Slave
+  - Configure Security Group
+    - Security group name: Tejas-Security-Group
+    - Add rule: All Trafic
+    - Source: Anywhere
+  - Review & Launch
+  - Select an exisiting key pair > Launch Instance
+  - Make sure instance status is running for slave
+- Open new terminal for slave ec2 instance
+- \$ sudo ssh -i "Tejas-ec2keypair.pem" ec2-user@ec2-3-98-49-95.ca-central-1.compute.amazonaws.com
+- goto Jenkins master UI --> http://ec2-35-183-206-183.ca-central-1.compute.amazonaws.com:8080/
+- Manage Jenkins
+- Configure Global Security
+- Agents
+  - TCP port for inbound agents: Random
+  - save
+- Manage Jenkins
+  - Manage Nodes and Clouds
+  - New Node
+  - Node Name: AWS_Instance_Node
+  - OK
+- Remote Home Directory: /home/ec2-user/jenkins
+- Labels: AWS_Instance_Node
+- Usage: Only Build Jobs with Label expressions matching the node
+- Launch Method: Launch agent by connecting it to the master
+- Save
+- Manage Jenkins -> Manage Nodes & Clouds -> Select the Instance: AWS_Instance_Node
+- Click on Agent AWS_Instance_Node
+  - Download
+    - launch agent Launch agent from browser --> jenkins-agent.jnlp
+    - Run from agent command line: agent.jar --> agent.jar
+- launch fileZilla
+- host: ec2-3-98-49-95.ca-central-1.compute.amazonaws.com
+- username: ec2-user
+- File > site manager
+- New site
+- Protocol: SFTP (select)
+- Host: ec2-3-98-49-95.ca-central-1.compute.amazonaws.com , port : 22
+- User: ec2-user
+- Ok
+- Goto Downloads folder(left side) from local and select -> jenkins-agent.jnlp, agent.jar file and drag to right side (/home/ec2-user)
+- Now goto slave terminal
+- ls -l --> Verify agent.jar, jenkins-agent.jnlp files
+- sudo su -
+- yum update
+- yum install java-1.8.0-openjdk-devel
+- exit
+- java -version
+- Manage Jenkins -> Configure System -> Jenkins Location and Jenkins URL -> Paste the updated DNS Name of slave from slave ec2 instance
+- Manage Jenkins
+- Manage Nodes and CLoud
+- Select AWS_Instance_Node
+- COpy the command:
+  - \$ java -jar agent.jar -jnlpUrl http://ec2-35-183-206-183.ca-central-1.compute.amazonaws.com:8080/computer/AWS_Instance_Node/jenkins-agent.jnlp -secret @secret-file -workDir "/home/ec2-user/jenkins"
+- Jenkins Dashboard
+- New Item
+- Enter an item name : DelegateJob
+- Select: Freestyle Project
+- Ok
+- Description: This is the Delegate Job Agent
+- Select checkbox: Restrict where this project can be run
+- Label Experession: AWS_Instance_Node (select)
+- Build (tab)
+- Add Build Step
+- (select drop-down) Execute Shell
+- Command --> echo "This job executed at the agent ... $(date +%D) - $(date +%T)"
+- Save
+- Build Now (tab) --> Check in Console output
+- Goto local slave terminal : \$ ls -l /home/ec2-user/jenkins/workspace/ --> Check if you see the DelegateJob
+
+## Creating a Multi-Project Job and Executed on Master/Slave - Pipeline Visualization View
+
+- Manage Jenkins > Manage Plugin
+- Available (tab)
+- Search for: Delivery Pipeline
+- select the checkbox -> Delivery Pipeline
+- Install without restart
+- Wait for the Plugin to be installed
+- Now create 3 jobs
+  - To create new Job --> Dashboard
+  - New Item
+  - Enter item name : Job1
+  - select freestyle project > ok
+  - (select) Restrict where this project can be run
+  - Build (tab)
+  - Add build step
+  - Execute shell
+  - Command: \$ echo "This job (Job1) executed at the agent ... $(date +%D) - $(date +%T)"
+  - Save
+  - Enter item name : Job2
+  - select freestyle project > ok
+  - (DONT SELECT) Restrict where this project can be run
+  - Build (tab)
+  - Add build step
+  - Execute shell
+  - Command: \$ echo "This job (Job2) executed at the master ... $(date +%D) - $(date +%T)"
+  - Save
+  - Enter item name : Job3
+  - select freestyle project > ok
+  - (SELECT) Restrict where this project can be run
+  - Build (tab)
+  - Add build step
+  - Execute shell
+  - Command: \$ echo "This job (Job3) executed at the agent ... $(date +%D) - $(date +%T)"
+  - Save
+- Dashboard
+- Goto > (selct) Job1
+- Configure
+- Post-build Actions (tab)
+- Add post-build action
+- (select) build other projects
+- Projects to build: (select) Job2
+- Goto > (selct) Job2
+- Configure
+- Post-build Actions (tab)
+- Add post-build action
+- (select) build other projects
+- Projects to build: (select) Job3
+- Jenkins Home -> Dashboard
+- Beside All (tab) there is + icon
+- click + icon
+- View name: Multi-Project Job View
+- (select) Delivery Pipeline View
+- ok
+- Pipelines (tab)
+- Add Components -> Click Add button
+- Name: Simple Job
+- Initial Job: Job1 (select dropdown)
+- In case (if error): AWS_Instance_Node is down (cross mark)
+  - Goto Terminal EC2 instance
+  - re-run the below command
+  - java -jar agent.jar -jnlpUrl http://ec2-35-183-206-183.ca-central-1.compute.amazonaws.com:8080/computer/AWS_Instance_Node/jenkins-agent.jnlp -secret @secret-file -workDir "/home/ec2-user/jenkins"
+
+## Creating Pipeline Job
+
+- Dashboard > New item
+- Item name: PipelineJob
+- (select) -> Pipeline
+- ok
+- Pipelines (tab)
+- Script (tab) -> Copy file from ./Jenkins
+- Save
+- Goto Terminal 2 slave
+- \$ sudo yum install -y git
+- Manage Jenkins > Manage Node and Clouds
+- (select) AWS_Instance_Node <--- This steps iss To Attach Slave to MASTER
+- take command and in terminal-2
+- \$ java -jar agent.jar -jnlpUrl http://ec2-35-183-206-183.ca-central-1.compute.amazonaws.com:8080/computer/AWS_Instance_Node/jenkins-agent.jnlp -secret @secret-file -workDir "/home/ec2-user/jenkins"
+- Goto Dashboard
+- PipelineJob -> Build Now
+- Build History (below) -> Select build which is running #3
+- Console output
+
+## Parallel Stages and Sequential Stages - Across Master/Slave
+
+- Dashboard > New item
+- Item name: ParalellJob
+- (select) -> Pipeline
+- ok
+- Pipelines (tab)
+- Script (tab) -> Copy file from ./jenkinsfile-parallel
+- Save
+- Build Now -> Check console output
+
+## Deploy to Tomcat webserver (target/destination) server which is Ubuntu server and Jenkins build in EC2 instance in another server
+
+- Create Ubuntu server in Ec2
+  - Launch Instance
+  - Search for: Ubuntu
+  - Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+  - Choose an Instance Type: t3.small
+  - Add Storage: 16
+  - Add tage: key: value ==> Name: target-tomcat-webserver
+  - Configure Security Group
+    - Type: Custom TCP
+    - Port Range: 8080
+    - Source: Anywhere
+  - Review and launch
+  - Launch
+  - Select exisiting key-pair
+  - in local open new terminal
+  - Goto Downloads folder
+  - \$ sudo ssh -i "Tejas-ec2keypair.pem" ubuntu@ec2-3-97-237-120.ca-central-1.compute.amazonaws.com
+  - Now in this ubuntu server-> install tomcat-webserver
+  - \$ sudo apt-get update
+  - \$ sudo apt-get install -y tomcat9
+  - \$ sudo apt-get install -y tomcat9-admin
+  - \$ sudo apt-get install -y nano
+  - \$ cd /etc/tomcat9
+  - \$ sudo nano tomcat-users.xml
+  - Copy the code from ./tomcat-users.xml
+  - \$ sudo service tomcat9 restart
+  - \$ sudo service tomcat9 status
+- Goto EC2 instance of ubuntu:
+- Copy the Public IPv4 DNS: \$ ec2-3-97-237-120.ca-central-1.compute.amazonaws.com
+- Open new tab in browser -> http://<dns-name>:8080
+- \$ http://ec2-3-97-237-120.ca-central-1.compute.amazonaws.com:8080
+- It works !
+- Thus ubunutu ec2 server is configured with tomcat9 webapp Server
+- Goto local Master terminal i.e- (Tejas-Jenkins-Master) -> EC2 instance
+- \$ sudo yum install -y git maven
+- Goto Jenkins UI
+- Jenkins Home -> Manage Jenkins -> Manage Plugins
+- (select) Available (tab)
+- search : Deploy to Container
+- (select) -> Deploy to Container
+- Install without restart
+- Jenkins Home -> New Item
+- Item Name: PipelineJobCICD
+- (select) Free Style Project
+- Ok
+- Source Code Management (tab)
+- (select) git
+- Repository URL: https://github.com/iomegak12/jenkinswebapp
+- Credentials:
+  - Click Add button
+  - Add: Jenkins (select)
+  - Username: tejas-tomcat
+  - Password: tomcat
+  - Ok
+  - Click -none- button left of Add
+  - (select) `tejas-tomcat/**`
+- Branch Specifier: `*/main`
+- Build (tab)
+- Add build step
+- (select) Invoke Top-level Maven Targets
+- Goals: package
+- Post-build Actions (tab)
+- Add post-build action
+- Deploy War/Ear to container (select)
+  - WAR/EAR files: `**/*.war`
+  - Context path: `webserverenv`
+  - Containers
+    - Add Container: `Tomcat 9.x Remote`
+    - Credentials :
+      - Click Add button
+      - Add: Jenkins (select)
+      - Username: tejas-tomcat
+      - Password: tomcat
+      - Select `tejas-tomcat/**` (Click -none- button left of Add)
+      - Add
+    - Tomcat URL: Sytnax: http://dns-of-ubuntu:8080
+      - http://ec2-3-97-237-120.ca-central-1.compute.amazonaws.com:8080/
+    - Save
+- (Select) PipelineJobCICD
+- Build now
+- Console output
+- Goto: http://<ubuntu-dns>:8080/webserverenv
