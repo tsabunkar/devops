@@ -38,3 +38,7 @@ https://codebunk.com/b/7801100385235/
 - Region: CA-CENTRAL-1
 
 ---
+
+# Containerization
+
+- Most of the builds of Jenkins master-slaves are done by K8 we don't manage manually

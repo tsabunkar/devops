@@ -340,3 +340,96 @@
 - Build now
 - Console output
 - Goto: http://<ubuntu-dns>:8080/webserverenv
+
+---
+
+## BlueOcean (Enhance UI)
+
+- Dashboard > Manage Jenkins > Manage Plugins
+- Avaliable
+- Search for: Blue Ocean
+- Select and install without restart
+- Dashboard > Open Blue Ocean
+- New Pipeline
+- Where do you store your code: Git
+- Connect to a Git Repository: https://github.com/iomegak12/BlueOcean_Pipeline
+- Create Pipeline (Since repo has the jenkins file, so by default the pipeline would be created)
+- NOTE: Q) How do BlueOcean -> Create pipeline know which is the Jenkins file in the root directory ?? Does it have Specific naming case of Jenkinsfile to be followed ?
+  - A)
+
+## Incase If you want to edit the Pipeline in Jenkins and then it would reflect in ur Git repo (Automation)
+
+- Create Pipeline
+- Where do you store your code?: Github
+- Connect to Github -> Create access token
+  - Personal access tokens : Jenkns PAT
+  - Generate token
+  - Copy the token --> ghp_lRwFaKqHYPJ66k2HTLofRz8vlO3Lai2ayx
+  - paste in ur Connect to Github token
+  - Connect
+- Which organization does the repository belong to?: tsabunkar
+- Choose a repository: BlueOcean_Pipeline (select) > create pipeline
+- Naming conflict: BlueOcean_Pipelinev2 > Save
+- Completed
+- Build is sucessfull !!
+- Edit icon
+- `+` icon
+- Stage: Tejas-Stage
+- Add Step
+- Select print Message
+- Message: Hello from Jenkins
+- Save
+- Save Pipeline > Save
+
+## How to build Docker image in jenkins pipeline and push/deploy to DockerHub
+
+- goto https://hub.docker.com/
+- login with ur creds
+- Account Settings > Security (tab)
+- New Access token
+  - Access Token Description: jenkins-token
+  - Access permissions: Read, Write, Delete
+  - Generate
+  - Copy the token: 80aa513b-cb05-42c9-8e6e-2d181b3c9
+- Now let us register this dockerhub creds in Jenkins
+- Come back Jenkins UI
+- Dahsboard
+- Manage jenkins > Manage Credsentials
+- Stores scoped to Jenkins (tab) > click Domains -> (global)
+- Add credentials
+  - username: tsabunkar (docker hub user)
+  - Password: 80aa513b-cb05-42c9-8e6e-2d181b3c9 (token)
+  - ID: docker-hub-credentials
+  - Ok
+- Jenkins Dashboard
+- New item: DockerBuildPushPipeline
+- (select) Pipeline
+- Ok
+- Description: This pipeline is designed to build a docker container image out of nodejs app, which is stored in github repo
+- Pipeline (tab)
+- Script: Copy from ./Jenkinsfile-docker-node
+- Save
+- Goto local Master terminal (Jenkins UI)
+- \$ sudo yum update
+- \$ sudo amazon-linux-extras install docker
+- \$ sudo service docker start
+- \$ sudo usermod -aG docker ec2-user
+- \$ sudo chmod 666 /var/run/docker.sock
+- \$ sudo systemctl restart jenkins
+- \$ sudo systemctl status jenkins
+- Goback to Jenkins UI
+- Refresh page
+- Relogin
+- (select) DockerBuildPushPipeline
+- Build now
+- Once build is successful -> Check if the new image is pushed in dockerhub
+- \$ https://hub.docker.com/repository/docker/tsabunkar/nodejsappv1
+- Goback to master terminal
+- \$ docker info
+- \$ docker images
+- NOW let us run the nodejs image which can be hosted
+- \$ docker run -d -t -p 9090:9999 --name noderestservice tsabunkar/nodejsappv1:latest
+- \$ docker ps
+- \$ docker logs 4e8369b (ID)
+- open the browser new tab -> http://dns-of-master:9090/get-data
+- \$ http://ec2-15-223-47-49.ca-central-1.compute.amazonaws.com:9090/get-data

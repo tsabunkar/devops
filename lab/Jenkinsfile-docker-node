@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/tsabunkar/custom_nodejsapp_jenkins'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'docker build -t tsabunkar/nodejsappv1:latest .'
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+
+        stage('Container Image Push') {
+            steps {
+                sh 'docker push tsabunkar/nodejsappv1:latest'
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
+        }
+    }
+}
