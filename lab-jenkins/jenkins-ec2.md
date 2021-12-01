@@ -355,7 +355,7 @@
 - Connect to a Git Repository: https://github.com/iomegak12/BlueOcean_Pipeline
 - Create Pipeline (Since repo has the jenkins file, so by default the pipeline would be created)
 - NOTE: Q) How do BlueOcean -> Create pipeline know which is the Jenkins file in the root directory ?? Does it have Specific naming case of Jenkinsfile to be followed ?
-  - A)
+  - A) Yes it has specific conventions of file Name to be followed which is present in Jenkins UI pipeline
 
 ## Incase If you want to edit the Pipeline in Jenkins and then it would reflect in ur Git repo (Automation)
 

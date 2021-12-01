@@ -42,3 +42,9 @@ https://codebunk.com/b/7801100385235/
 # Containerization
 
 - Most of the builds of Jenkins master-slaves are done by K8 we don't manage manually
+
+---
+
+# NOTE:
+
+- Currently docker-compose.yml is old style of writing docker comands -> Helm Charts is new fashion https://helm.sh/
