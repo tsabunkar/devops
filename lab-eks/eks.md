@@ -1,24 +1,127 @@
-# Case-study for EKS
+# First Case-study for EKS -> Deplying Container image in ECR repo
 
+- Case study Repo: https://github.com/tsabunkar/scbv4-casestudy
+- Documentation about this case-study is ./first-case-study-eks
 - Goto EC2
-- Create a new instance
-- t3 small
-- Add storage: 16GB
-- Tag: Name: tejas-docker-server
-- All trafic, Anywhere
-- Launch
-- In terminal connect the above Ec2 instance
+- Launch Instances
+  - Amazon Machine Image (AMI): Amazon Linux 2 AMI (HVM) - Kernel 5.10
+  - Instance Type: t3 small
+  - Add storage: 16GB
+  - Add Tags
+    - Tag => Name: tejas-docker-server
+  - Configure Security Group:
+    - Add rule
+    - Type: All trafic, Source: Anywhere
+  - Launch
+  - Make sure you have: tejas-admin-keypair-aws.pem (key-pair)
+- In local terminal connect to the above Ec2 instance
+- \$ sudo ssh -i "tejas-admin-keypair-aws.pem" ec2-user@ec2-3-237-184-12.compute-1.amazonaws.com
 - Now let us install- git, docker, etc
-- \$ sudo yum install
-
-- \$ git --version
-- \$ docker --version
-- Now clone this repo: https://github.com/tsabunkar/scbv4-casestudy
-
-- Before building image, Need to push image to ECR repository
-- Goto ECR in aws
-- Repositories
-- Create Repository
-  - Private
-  - Create Repositopry
--
+  - \$ sudo yum update
+  - \$ sudo yum install -y git
+  - \$ sudo amazon-linux-extras install docker
+  - \$ sudo service docker start
+  - \$ sudo usermod -aG docker ec2-user
+  - \$ sudo chmod 666 /var/run/docker.sock
+- Check if git, docker installed properly
+  - \$ git --version
+  - \$ docker --version
+  - \$ docker info
+  - \$ docker images
+- Make practice directory and clone ur git project in this ec2 instance
+  - \$ mkdir practices
+  - \$ cd practices/
+  - Now clone this repo: \$ git clone https://github.com/tsabunkar/scbv4-casestudy
+  - \$ ls
+  - \$ cd scbv4-casestudy/
+  - \$ ls -l
+  - \$ cd source/
+  - \$ cd calculation-offer-service
+  - \$ cd CalculationServiceAPISolution/
+  - \$ ls -l
+- Now Login to AWS Subscription from EC2 Instance
+  - Before that generate IAM role
+    - Goto IAM
+    - Users (tab)
+    - (select user) devUser1
+    - Security Credentials (tab)
+    - Create access key
+    - Download .csv file --> give u : Access key ID, Secret access key
+  - Back to local terminal (ec2 instance)
+  - \$ aws --version
+  - \$ aws configure
+  - AWS Access Key ID [None]: AKIAXGBYOXBBZWB (from above generated IAM Role -> devUser1)
+  - AWS Secret Access Key [None]: X6QOOZDkhw8hNnSfEal4oTvPm3KMwDZ3BOW
+  - Default region name [None]: us-east-1
+  - Default output format [None]: json
+- Now let us Create ECR Repository, Since Before building image, We Need to push image to ECR repository
+  - Goto ECR in aws
+  - Amazon ECR: Repositories
+  - Create Repository
+    - Visibility settings: Private
+    - Repository name: tejas-casestudy-calculation-service
+    - Create Repositopry
+  - (Select the Repository created) tejas-casestudy-calculation-service
+  - View push commands
+  - Execute command showed in your local terminal: Push commands for tejas-casestudy-calculation-service (NOTE: in local terminal ur there in path -> /home/ec2-user/practices/scbv4-casestudy/source/calculation-offer-service/CalculationServiceAPISolution)
+    - \$ aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 494039644227.dkr.ecr.us-east-1.amazonaws.com
+    - \$ docker build -t tejas-casestudy-calculation-service .
+    - \$ docker tag tejas-casestudy-calculation-service:latest 494039644227.dkr.ecr.us-east-1.amazonaws.com/tejas-casestudy-calculation-service:latest
+    - \$ docker push 494039644227.dkr.ecr.us-east-1.amazonaws.com/tejas-casestudy-calculation-service:latest
+    - Goto ECR Repository -> tejas-casestudy-calculation-service
+    - Refersh > you would see new image pushed here !!
+- Now let us pull monogo db, Attach network
+  - \$ docker pull mongo:latest
+  - \$ docker images
+  - \$ docker network create training-network
+  - \$ docker network inspect training-network
+  - \$ docker network ls
+  - \$ docker run -d -t -p 27017:27017 --name mongo-server --network training-network mongo
+  - \$ docker container ls
+  - \$ docker inspect 145 (container ID)
+  - \$ docker ps
+  - \$ docker exec -it 145 bash
+  - Inside the mongo-container let us run some mongo commands
+    - \$ mongo --host mongo-server --port 27017
+    - \$ show dbs
+    - \$ use admin
+    - \$ show collections
+    - \$ exit (come out from mongo shell)
+    - \$ exit (come out of devUser1 IAM user)
+- \$ sudo yum install nano -y (Run this command terminal)
+- Now let us do Basic config of Mongo server and run image
+  - \$ nano prod-settings.env -> (edit the MONGO-CONNECTION_STRING value to -> mongodb://mongo-server:27017/calculationservicesrequestsdb)
+  ```
+  ASPNETCORE_URLS=http://*:80
+  ASPNETCORE_ENVIRONMENT=Development
+  MONGO_CONNECTION_STRING=mongodb://mongo-server:27017/calculationservicesrequestsdb
+  ```
+  - \$ cat prod-settings.env
+  - Run Docker image SYTNAX -> docker run -d -t -p 8080:80 --env-file=./prod-settings.env --name calculationrestservice --network training-network <your-ECR-repository-name>
+  - \$ docker run -d -t -p 8080:80 --env-file=./prod-settings.env --name calculationrestservice --network training-network tejas-casestudy-calculation-service
+  - \$ docker container ls
+  - \$ docker logs 07cbcbc2142a (container ID of image -> tejas-casestudy-calculation-service)
+- open the postman
+  - URL: SYNTAX -> http://<public-ipv4-dns-name-of-ec2-instance>:8080/api/calculation-services/process
+    - \$ http://ec2-3-237-184-12.compute-1.amazonaws.com:8080/api/calculation-services/process
+  - Method -> POST
+  - Headers
+    - Content-Type:application/json
+    - Accept:application/json
+  - Body -> ./eks-post.json
+  - raw -> json > beautify
+  - send
+  - Hope you got 200OK
+- Now let us check if the posted message is saved in our mongodb which was ecr hosted image
+  - Back terminal
+  - \$ docker container ls
+  - \$ docker exec -it 145270cf2181 bash (image ID -> mongo)
+  - Now we are Inside the mongo-container
+  - \$ mongo --host mongo-server --port 27017
+  - \$ show dbs
+  - \$ use calculationservicesRequestsDb
+  - \$ show collections
+  - \$ db.calculationservicerequests.find()
+  - \$ exit
+  - \$ exit
+- Verify the records are present
