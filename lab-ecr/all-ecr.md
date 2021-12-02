@@ -272,8 +272,9 @@
 - Open Postman
   - POST method
   - URL: (sytnax) http://DNS-of-ec2-intsance:9090/
-    - http://ec2-3-97-71-235.ca-central-1.compute.amazonaws.com:9090
+    - http://ec2-3-97-71-235.ca-central-1.compute.amazonaws.com:9090/
   - Content-Type:application/json
   - Accept:application/json
   - Body -> Raw
   - message: ./post-use-study.json
+- Now make sure you recieved email in your personal email-id
