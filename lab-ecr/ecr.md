@@ -1,7 +1,7 @@
-# First Case-study for EKS -> Deplying Container image in ECR repo
+# First Case-study for ECR -> Deploying Container image in ECR repo
 
 - Case study Repo: https://github.com/tsabunkar/scbv4-casestudy
-- Documentation about this case-study is ./first-case-study-eks
+- Documentation about this case-study is ./first-case-study-ecr
 - Goto EC2
 - Launch Instances
   - Amazon Machine Image (AMI): Amazon Linux 2 AMI (HVM) - Kernel 5.10
@@ -108,7 +108,7 @@
   - Headers
     - Content-Type:application/json
     - Accept:application/json
-  - Body -> ./eks-post.json
+  - Body -> ./ecr-post.json
   - raw -> json > beautify
   - send
   - Hope you got 200OK

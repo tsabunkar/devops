@@ -26,4 +26,4 @@ Once the record is successfully persisted a new event with the amount limit data
 
 Finally, once the event is consumed by the Card Service, we will again update the initial record with its final state. The amount Limit value will be updated, and the status will change to VERIFIED. This status value means the new Credit Card Data is ready to be returned to the customer so they can start using their new Digital Credit Card.
 
-![case-study-eks](./first-case-study-eks.png 'case-study-eks')
+![case-study-ecr](./first-case-study-ecr.png 'case-study-ecr')
