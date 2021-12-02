@@ -48,3 +48,4 @@ https://codebunk.com/b/7801100385235/
 # NOTE:
 
 - Currently docker-compose.yml is old style of writing docker comands -> Helm Charts is new fashion https://helm.sh/
+- Increase SSH Timeout: https://www.tecmint.com/increase-ssh-connection-timeout/
