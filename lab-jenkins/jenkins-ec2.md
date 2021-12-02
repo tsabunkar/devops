@@ -124,13 +124,13 @@
     - launch agent Launch agent from browser --> jenkins-agent.jnlp
     - Run from agent command line: agent.jar --> agent.jar
 - launch fileZilla
-- host: ec2-3-98-49-95.ca-central-1.compute.amazonaws.com
-- username: ec2-user
 - File > site manager
 - New site
 - Protocol: SFTP (select)
 - Host: ec2-3-98-49-95.ca-central-1.compute.amazonaws.com , port : 22
 - User: ec2-user
+- Key file: <Browse for file .pem>
+  - Ensure: Select file type as PEM file
 - Ok
 - Goto Downloads folder(left side) from local and select -> jenkins-agent.jnlp, agent.jar file and drag to right side (/home/ec2-user)
 - Now goto slave terminal
@@ -346,7 +346,7 @@
 ## BlueOcean (Enhance UI)
 
 - Dashboard > Manage Jenkins > Manage Plugins
-- Avaliable
+- Avaliable (tab)
 - Search for: Blue Ocean
 - Select and install without restart
 - Dashboard > Open Blue Ocean

@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Git-Checkout') {
+            steps {
+                echo 'Checking out from Git repository'
+
+                git branch: 'main', url: 'https://github.com/tsabunkar/jenkinspipelinescript'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Building the Check-out Project ...'
+
+                sh 'bash Build.sh'
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                echo 'Running JUnit Tests ...'
+
+                sh 'bash Unit.sh'
+            }
+        }
+
+        stage('Quality-Gate') {
+            steps {
+                echo 'Verifying Quality Gates ...'
+
+                sh 'bash Quality.sh'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to the Stage Environment ...'
+
+                sh 'bash Deploy.sh'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'This always will run'
+        }
+
+        success {
+            echo 'This shall run only if the execution is successful'
+        }
+
+        failure {
+            echo 'This shall run only IF the execution is failed!'
+        }
+
+        unstable {
+            echo 'This shall run only if the pipeline execution is Unstable'
+        }
+
+        changed {
+            echo 'This shall run only if the pipeline steps are changed!'
+        }
+    }
+}

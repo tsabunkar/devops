@@ -278,3 +278,133 @@
   - Body -> Raw
   - message: ./post-use-study.json
 - Now make sure you recieved email in your personal email-id
+
+## Automate above Steps as Stages in Jenkins Pipeline
+
+- Goto EC2
+- Launch Instance
+- AMI: Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type
+- Instance Type: t2.micro (free tier)
+- Storage : 16GB
+- Add tags -> Name: ec2-jenkins-master
+- Configure Security Group
+  - Security group name: Tejas-Security-Group
+  - Add rule: All Trafic
+  - Source: Anywhere
+- Review & Launch
+- Key-pair -> tejas-admin-keypair-aws | RSA
+- Launch Instances
+- Open local terminal
+- Goto directory where ur keypair -> tejas-admin-keypair-aws is present
+- \$ sudo ssh -i "tejas-admin-keypair-aws.pem" ec2-user@ec2-3-84-24-62.compute-1.amazonaws.com
+- Let us install Jenkins inside this ec2 instance
+  - \$ sudo su -
+  - \$ yum update
+  - \$ yum install java-1.8.0-openjdk-devel -y
+  - \$ java -version
+  - \$ javac
+  - \$ sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+  - \$ sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+  - \$ sudo amazon-linux-extras install epel -y
+  - \$ yum install daemonize -y
+  - \$ yum install jenkins -y
+  - \$ systemctl start jenkins
+  - \$ systemctl status jenkins
+- Goto Browser: (to configure jenkins ui)
+  - Get the Public IPv4 DNS --> From EC2 instance
+  - \$ http://<Public IPv4 DNS>:8080
+  - \$ http://ec2-3-84-24-62.compute-1.amazonaws.com:8080
+  - In local get the adminstrator password for Jenkins UI
+    - \$ cat /var/lib/jenkins/secrets/initialAdminPassword ==> faf516d9e2ce44348324905dad470b17
+  - Give the above Admininstrator password in Jenins UI > Continue
+  - Install Suggested Plugins
+  - Getting started:
+    - Username: tejas-admin
+    - Password: 1234
+    - Confirm password: 1234
+    - Full name: tejas sabunkar
+    - email: tsabunkar@gmail.com
+  - save and continue
+  - save and finish
+  - Jenkins URL : http://ec2-3-84-24-62.compute-1.amazonaws.com:8080/
+  - start using jenkins
+- Manage Jenkins
+- Security > Configure Global Security
+- Agents
+  - TCP port for inbound agents: Random
+  - save
+- Manage Jenkins
+  - System Configuration > Manage Nodes and Clouds
+  - New Node
+  - Node Name: Master_EC2_Node
+  - (select) Permanent Agent
+  - OK
+  - Description: Master Node which is running on EC2 instance name: ec2-jenkins-master
+  - Remote root directory: /home/ec2-user/jenkins
+  - Labels: Master_EC2_Node
+  - Usage: Only Build Jobs with Label expressions matching the node
+  - Launch Method: Launch agent by connecting it to the controller
+  - Save
+- Manage Jenkins -> Manage Nodes & Clouds -> Select the Instance: Master_EC2_Node
+- Click on Agent Master_EC2_Node
+- Download
+  - launch agent Launch agent from browser --> jenkins-agent.jnlp
+  - Run from agent command line: agent.jar --> agent.jar
+- launch fileZilla
+- File > site manager
+- New site
+  - site name: aws-ec2-jenkins-master
+  - General (tab)
+    - Protocol: SFTP (select)
+    - host: ec2-3-84-24-62.compute-1.amazonaws.com
+    - port : 22
+    - Logon Type: Key file
+    - Key file: <Browse for file tejas-admin-keypair-aws.pem>
+      - Ensure: Select file type as PEM file
+    - User: ec2-user
+    - Connect
+- Once successfully connected to ec2 instance at right hand side you should see the AWS EC2 instance remote directories :)
+- Goto Downloads folder(left side) from local and select -> [jenkins-agent.jnlp, agent.jar] file and drag to right side (/home/ec2-user)
+- Now goto local master terminal
+- \$ exit (incase you are as root)
+- \$ ls -l --> Ensure both jenkins-agent.jnlp, agent.jar files are present
+- In the Jenkins UI Master_EC2_Node execute Run from agent command line, with the secret stored in a file: (on ur local terminal)
+  - \$ echo d8aeabc902d5193b266e0d7a8eeec77442e60f58464ce27143b5b7196998e5c2 > secret-file
+  - \$ java -jar agent.jar -jnlpUrl http://ec2-3-84-24-62.compute-1.amazonaws.com:8080/computer/Master%5FEC2%5FNode/jenkins-agent.jnlp -secret @secret-file -workDir "Master_EC2_Node"
+  - Onces it says Connected !! (in terminal)
+  - Go back to jenkins UI and referesh the Master_EC2_Node -> you should not see the CROSS icon in front of computer
+- Let us create new pipeline
+  - Jenkins Dashboard
+  - New Item
+  - Enter an item name : first-test-pipeline
+  - Select: pipeline
+    - Script: Jenkinsfile-first-pipeline-script
+  - Ok
+- Build Now
+- ERROR: Error cloning remote repo 'origin'
+  hudson.plugins.git.GitException: Could not init /var/lib/jenkins/workspace/first-test-pipeline
+  - SOLUTION: That was bcoz in ec2-instance you did not have git installed, Check via command:
+    - \$ git --version
+    - \$ sudo yum install -y git
+- Build History tab, Click build number
+- Console output
+- Once test build is successful,cheers !!
+- let us BlueOcean plugin
+  - Dashboard > Manage Jenkins > Manage Plugins
+  - Avaliable (tab)
+  - Search for: Blue Ocean
+  - Select and install without restart
+  - Dashboard > Open Blue Ocean
+  - Let us add new pipeline from blueocean
+    - New Pipeline
+    - Where do you store your code?: Github
+    - Connect to Github -> Create access token
+      - Personal access tokens : My Jenkns PAT
+      - Generate token
+      - Copy the token --> ghp_lRwFaKqHYPJ66k2HTLofRz8vlO3Lai2ayx
+      - paste in ur Connect to Github token
+      - Connect
+    - Which organization does the repository belong to?: tsabunkar
+    - Choose a repository: BlueOcean_Pipeline (select) > create pipeline
+    - Completed
+    - Build is sucessfull !!
