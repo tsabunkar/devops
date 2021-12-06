@@ -253,3 +253,90 @@
     - (select) token
     - Enter token value from above
     - Sign in
+
+---
+
+# Jenins Pipeline -> Read from Git, Build image and push to ECR
+
+- goto ec2
+- Start ec2 instance where Jenkins master was running
+- local terminal connect to this ec2 instance
+  - \$ ssh -i "Tejas-ec2keypair.pem" ec2-user@ec2-35-183-118-133.ca-central-1.compute.amazonaws.com
+  - \$ sudo amazon-linux-extras install docker
+  - \$ sudo service docker start
+  - \$ sudo usermod -aG docker ec2-user
+  - \$ sudo chmod 666 /var/run/docker.sock
+  - \$ docker images
+  - \$ docker info
+  - \$ docker ps
+  - \$ sudo systemctl restart jenkins
+  - \$ sudo systemctl status jenkins
+- Login to Jenkins
+  - \$ http://ec2-35-183-118-133.ca-central-1.compute.amazonaws.com:8080/
+  - \$ uname: tejas-admin, password: you know
+  - Upadate Jenkins Configuration
+    - Manage Jenkins -> Configure System -> Jenkins Location -> Jenkins URL (update the jenkins url to newly ipv4 dns name that was created: http://ec2-35-183-118-133.ca-central-1.compute.amazonaws.com:8080/)
+    - Save
+- Goto ECR
+  - Create repository
+  - Private repo
+  - Repository name: tejasv2-casestudy-calculation-service
+  - Create repository
+- select the repo created now
+- View Push commands
+- Open a new local Terminal
+  - \$ aws configure (abuser15.csv file)
+  - \$ Default output format [yaml]: json
+  - \$ aws ecr get-login-password --region ca-central-1 (Copy the password in notepad, will be used later)
+- Comeback to Jenkins (Now let us create Env Key:value variable for ecr uname and password)
+  - Jenkins Dashboard -> Manage Jenkins -> Manage Credentials -> Stores scoped to Jenkins (global) -> Add Credentials
+  - Username: AWS
+  - Password: (paste the password from -> aws ecr get-login-password COMMAND)
+  - ID: ecr-credentials
+  - Ok
+- Goto github Repo: https://github.com/tsabunkar/airbus-casestudy
+- Goback to Jenkins
+- Open Blue Ocean
+- New pipeline
+  - Where do you store your code?: Github
+  - Choose a repository: airbus-casestudy
+  - Create pipeline
+- In Blueocean UI let us create stages
+- Click Start (let us define environment variable)
+- Environment (click `+` button)
+  - NOTE: Remeber in ecr repo you have opened (view push commands) -> Push commands for tejasv2-casestudy-calculation-service
+  - Name: ECR_ID, Value: 142198642907.dkr.ecr.ca-central-1.amazonaws.com
+  - Name: CALCULATION_SERVICE_IMAGE, Value: tejasv2-casestudy-calculation-service
+- Create Stage
+- Stage Name: docker-cmds
+- Add step: (select) Change current directory
+- Path: `source/calculation-offer-service/CalculationServiceAPISolution`
+- Child steps
+  - Add step: (select) Shell Script
+  - \$ pwd (paste this command in text box)
+  - Save (by committing to main branch)
+- Once build is successfully :)
+- let us Add new steps [PLEASE NOTE: Add steps under the above path only] (All shell scripts only)
+  - \$ docker build -t $CALCULATION_SERVICE_IMAGE:latest -t $CALCULATION_SERVICE_IMAGE:$BUILD_NUMBER . (paste this command in text box)
+  - Save > Commit & Run
+  - \$ docker tag $CALCULATION_SERVICE_IMAGE:latest $ECR_ID/$CALCULATION_SERVICE_IMAGE:latest
+  - Save > Commit & Run
+  - \$ docker tag $CALCULATION_SERVICE_IMAGE:$BUILD_NUMBER $ECR_ID/$CALCULATION_SERVICE_IMAGE:$BUILD_NUMBER
+  - Save > Commit & Run
+  - Goto git repo under Jenkins file -> https://github.com/tsabunkar/airbus-casestudy/blob/main/Jenkinsfile
+    - edit file: (Jenkinsfile)
+    ```
+    ECR_CREDENTIALS = credentials('ecr-credentials')
+    ```
+    - Commit changes
+  - Goback to Blue Ocean UI, Continue adding steps
+  - \$ docker login --username $ECR_CREDENTIALS_USR --password $ECR_CREDENTIALS_PSW $ECR_ID
+  - Save > Commit & Run
+  - \$ docker image prune -f (delete unwanted images like- <NONE>)
+  - Save > Commit & Run
+  - \$ docker push $ECR_ID/$CALCULATION_SERVICE_IMAGE:latest (this would push this image to ecr repo)
+  - Save > Commit & Run
+- Now Verify the pipeline is working ... and make sure that ECR gets the repository ...
+- goto ecr repo
+- (select) tejasv2-casestudy-calculation-service
+- Ensure new latest image is pushed here :)
