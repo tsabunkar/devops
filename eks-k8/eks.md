@@ -308,7 +308,7 @@
   - Name: ECR_ID, Value: 142198642907.dkr.ecr.ca-central-1.amazonaws.com
   - Name: CALCULATION_SERVICE_IMAGE, Value: tejasv2-casestudy-calculation-service
 - Create Stage
-- Stage Name: docker-cmds
+- Stage Name: casestudy-calculation
 - Add step: (select) Change current directory
 - Path: `source/calculation-offer-service/CalculationServiceAPISolution`
 - Child steps
@@ -340,3 +340,132 @@
 - goto ecr repo
 - (select) tejasv2-casestudy-calculation-service
 - Ensure new latest image is pushed here :)
+- Now Do for all the microservices !!
+- NOTE: To delete the eks cluster using aws cli
+  - \$ eksctl delete cluster -f eksctl-cluster.yaml
+- Above we have doen for one service -> tejas-casestudy-calculation-service, Let us repeat above steps for -> tejas-creditcard-identity-verification-response-daemon, tejas-creditcard-service, tejas-email-service, tejas-identity-verification-service
+- Push Docker image for Microservice: <creditcard-identity-verification-response-daemon>
+  - Goto `airbus-casestudy` Blueocean Jenkins UI
+  - Create Stage (add parallel Stage)
+  - Stage Name: creditcard-identity-verification-response-daemon
+  - Add Step
+  - Add step: (select) Change current directory
+    - Path: `source/creditcard-identity-verification-response-daemon`
+    - Child steps
+      - Add step: (select) Shell Script
+      - \$ pwd (paste this command in text box)
+      - Save > Commit & Run
+      - Goto ECR > Create repository > Repository name: tejasv2-creditcard-identity-verification-response-daemon
+        - Create repository
+        - (select) tejasv2-creditcard-identity-verification-response-daemon
+        - View push commands
+        - Keep this window handy
+      - Add step: Shell Script
+      - \$ docker build -t $CREDITCARD_RESPONSE_DAEMON:latest -t $CREDITCARD_RESPONSE_DAEMON:$BUILD_NUMBER .
+      - Make sure you add env variable in Jenkins pipeline at start stage
+        - CREDITCARD_RESPONSE_DAEMON: tejasv2-creditcard-identity-verification-response-daemon
+      - Save > Commit & Run
+      - Add step: Shell Script
+      - \$ docker tag $CREDITCARD_RESPONSE_DAEMON:latest $ECR_ID/$CREDITCARD_RESPONSE_DAEMON:latest
+      - Save > Commit & Run
+      - Add step: Shell Script
+      - \$ docker tag $CREDITCARD_RESPONSE_DAEMON:$BUILD_NUMBER $ECR_ID/$CREDITCARD_RESPONSE_DAEMON:$BUILD_NUMBER
+      - Save > Commit & Run
+      - Add step: Shell Script
+      - \$ docker image prune -f (delete unwanted images like- <NONE>)
+      - Save > Commit & Run
+      - \$ docker push $ECR_ID/$CREDITCARD_RESPONSE_DAEMON:latest (this would push this image to ecr repo)
+      - Save > Commit & Run
+- Push Docker image for Microservice: <creditcard-service>
+  - Stage Name: creditcard-service
+  - Add Step
+  - Add step: (select) Change current directory
+    - Path: `source/creditcard-service`
+    - Child steps
+      - Add step: (select) Shell Script
+      - \$ pwd
+      - Save > Commit & Run
+      - Goto ECR > Create repository > Repository name: tejasv2-creditcard-service
+        - Create repository
+        - (select) tejasv2-creditcard-service
+        - View push commands
+        - Keep this window handy
+      - Add step: (select) Shell Script
+      - \$ docker build -t $CREDIT_SERVICE:latest -t $CREDIT_SERVICE:$BUILD_NUMBER .
+      - Make sure you add env variable in Jenkins pipeline at start stage
+        - CREDIT_SERVICE: tejasv2-creditcard-service
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker tag $CREDIT_SERVICE:latest $ECR_ID/$CREDIT_SERVICE:latest
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker tag $CREDIT_SERVICE:$BUILD_NUMBER $ECR_ID/$CREDIT_SERVICE:$BUILD_NUMBER
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker image prune -f
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker push $ECR_ID/$CREDIT_SERVICE:latest (this would push this image to ecr repo)
+      - Save > Commit & Run
+- Push Docker image for Microservice: <email-service>
+  - Stage Name: email-service
+  - Add Step
+  - Add step: (select) Change current directory
+    - Path: `source/email-service`
+    - Child steps
+      - Add step: (select) Shell Script
+      - \$ pwd
+      - Save > Commit & Run
+      - Goto ECR > Create repository > Repository name: tejasv2-email-service
+        - Create repository
+        - (select) tejasv2-email-service
+        - View push commands
+        - Keep this window handy
+      - Add step: (select) Shell Script
+      - \$ docker build -t $EMAIL_SERVICE:latest -t $EMAIL_SERVICE:$BUILD_NUMBER .
+      - Make sure you add env variable in Jenkins pipeline at start stage
+        - EMAIL_SERVICE: tejasv2-email-service
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker tag $EMAIL_SERVICE:latest $ECR_ID/$EMAIL_SERVICE:latest
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker tag $EMAIL_SERVICE:$BUILD_NUMBER $ECR_ID/$EMAIL_SERVICE:$BUILD_NUMBER
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker image prune -f
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker push $ECR_ID/$EMAIL_SERVICE:latest (this would push this image to ecr repo)
+      - Save > Commit & Run
+- Push Docker image for Microservice: <identity-verification-service>
+  - Stage Name: identity-verification-service
+  - Add Step
+  - Add step: (select) Change current directory
+    - Path: `source/identity-verification-service`
+    - Child steps
+      - Add step: (select) Shell Script
+      - \$ pwd
+      - Save > Commit & Run
+      - Goto ECR > Create repository > Repository name: tejasv2-identity-verification-service
+        - Create repository
+        - (select) tejasv2-identity-verification-service
+        - View push commands
+        - Keep this window handy
+      - Add step: (select) Shell Script
+      - \$ docker build -t $IDENTITY_VERIFICATION:latest -t $IDENTITY_VERIFICATION:$BUILD_NUMBER .
+      - Make sure you add env variable in Jenkins pipeline at start stage
+        - IDENTITY_VERIFICATION: tejasv2-identity-verification-service
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker tag $IDENTITY_VERIFICATION:latest $ECR_ID/$IDENTITY_VERIFICATION:latest
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker tag $IDENTITY_VERIFICATION:$BUILD_NUMBER $ECR_ID/$IDENTITY_VERIFICATION:$BUILD_NUMBER
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker image prune -f
+      - Save > Commit & Run
+      - Add step: (select) Shell Script
+      - \$ docker push $ECR_ID/$IDENTITY_VERIFICATION:latest (this would push this image to ecr repo)
+      - Save > Commit & Run
