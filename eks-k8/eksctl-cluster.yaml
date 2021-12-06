@@ -1,0 +1,21 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: tejas-cluster
+  region: ca-central-1
+
+managedNodeGroups:
+  - name: ng-1-workers
+    labels: { role: workers }
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 5
+    volumeSize: 30
+    privateNetworking: true
+
+cloudWatch:
+  clusterLogging:
+    enableTypes:
+      ['api', 'audit', 'authenticator', 'controllerManager', 'scheduler']

@@ -196,3 +196,60 @@
 - kubectl version --client
 - aws configure
 - aws update-kubeconfig --name
+
+---
+
+# Creating EKS cluster using Automation -> Cloudformation (above steps) ==> Privisioning EKS cluster using eksctl
+
+- IAM
+- Users
+- get the csv file of ur user
+- In local terminal
+- aws configure -> enter Access key Id, Screte Access key, region name, Default output format [json]: yaml etc
+  - MAKE SURE output format : YAML
+- \$ kubectl version --client
+- Create new eks cluster using yml file
+- Download eksctl from url:
+  - https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html
+  - \$ `curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp`
+  - \$ sudo mv /tmp/eksctl /usr/local/bin
+  - \$ eksctl version
+- create a file named "eksctl-cluster.yaml" and paste the following content
+  - NOTE: EKSCTL documentation: https://eksctl.io/
+  - \$ touch eksctl-cluster.yaml
+  - \$ nano eksctl-cluster.yaml (copy file form ./eksctl-cluster.yaml)
+  - \$ cat eksctl-cluster.yaml
+- \$ eksctl create cluster -f eksctl-cluster.yaml
+- in aws console gui, search for Cloudformation in appropriate region ... You should see the all the resource eks cluster would be created automatically - NO need to manually do vpc, subnets, etc...
+- got lense
+  - cluster
+  - In command prompt local
+    - \$ aws eks update-kubeconfig --name tejas-cluster --region ca-central-1
+  - Clusters
+  - connect
+
+## Install and Provision Metrics Server and Dashboard
+
+- Yml file to get metrics (in local)
+  - \$ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.5.0/components.yaml
+  - \$ kubectl get pods -n kube-system
+  - \$ kubectl top nodes -n kube-system
+- Create admin-service account YAML file
+  - \$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/recommended.yaml
+  - \$ kubectl get all -n kubernetes-dashboard
+  - Now create a file named "eks-admin-account.yaml" and paste the following content from "./eks-admin-account.yaml"
+    - \$ touch eks-admin-account.yaml
+    - \$ nano eks-admin-account.yaml
+    - \$ kubectl apply -f "eks-admin-account.yaml"
+  - Now let us login to k8 dashboard
+  - \$ kubectl -n kubernetes-dashboard get secret
+  - (identify the user name which is created recently)
+  - \$ kubectl -n kubernetes-dashboard describe secret <full-user-name>
+  - \$ kubectl -n kubernetes-dashboard describe secret admin-user-token-rwzxn
+  - Copy the TOKEN, As it would be used later !!
+  - \$ kubectl proxy
+  - OPen browser:
+    - `http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/node?namespace=_all`
+    - (select) token
+    - Enter token value from above
+    - Sign in
