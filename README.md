@@ -45,6 +45,24 @@ https://codebunk.com/b/7801100385235/
 
 ---
 
+# How do I assign a custom DNS server to an EC2 instance (VPC) which persists across reboots?
+
+- \$ sudo su
+- \$ cat /etc/resolv.conf
+- \$ nslookup google.com
+- \$ cd /etc/dhcp
+- \$ ls
+- \$ nano dhclient.conf (Add this line at last)
+  ```
+   supersede domain-name-servers 172.111.94.36;
+  ```
+- \$ reboot
+- \$ cat /etc/resolv.conf
+- \$ nslookup google.com (any ping to any website happens via my random DNS name -> 172.111.94.36 )
+- Detailed Explaination: https://www.youtube.com/watch?v=0xDYDTss2jQ
+
+---
+
 # NOTE:
 
 - Currently docker-compose.yml is old style of writing docker comands -> Helm Charts is new fashion https://helm.sh/
