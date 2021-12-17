@@ -232,8 +232,8 @@
   - \$ nano prod-settings.env
   ```
   CLOUDAMQP_URL=amqp://guest:guest@rabbitmq-server
-  AWS_ACCESS_KEY=AKIASCG5TDDNWIB24N6N
-  AWS_ACCESS_SECRET_KEY=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
+  AWS_ACCESS_KEY=
+  AWS_ACCESS_SECRET_KEY=
   AWS_REGION=ap-south-1
   MONGO_CONNECTION_STRING=mongodb://mongo-server:27017/emailrequestsdb
   EMAIL_REQUESTS_QUEUE=email-requests-queue

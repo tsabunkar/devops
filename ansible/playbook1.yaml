@@ -1,0 +1,6 @@
+---
+- hosts: productionservers
+  tasks:
+    - name: Display and Bring Message
+      debug:
+        msg: "This value shall be displayed and brought back to the Master"

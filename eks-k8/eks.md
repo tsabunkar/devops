@@ -469,3 +469,120 @@
       - Add step: (select) Shell Script
       - \$ docker push $ECR_ID/$IDENTITY_VERIFICATION:latest (this would push this image to ecr repo)
       - Save > Commit & Run
+- Open EKS Cluster and Cloudformation tab in AWS (to keep it handy)
+- In local terminal execute :
+  - \$ eksctl create cluster -f eksctl-cluster.yaml (Since yesterday it was deleted)
+  - Open another terminal to connect to ec2
+    - \$ sudo ssh -i "Tejas-ec2keypair.pem" ec2-user@ec2-35-183-185-90.ca-central-1.compute.amazonaws.com
+    - \$ sudo service docker start
+    - \$ sudo usermod -aG docker ec2-user
+    - \$ sudo chmod 666 /var/run/docker.sock
+    - Also When connected to Jenkins -> http://ec2-35-183-185-90.ca-central-1.compute.amazonaws.com:8080 (make sure you update Jenkins Url in Configure System)
+    - Ensure above pipeline is still working
+      - In case you get error: <denied: Your authorization token has expired. Reauthenticate and try again.> (While pushing docker image)
+      - Solution
+        - \$ aws ecr get-login-password --region ca-central-1
+        - In jenkins > manage jenkins > manage credentials > global > (select) ecr-credentails > update > Change password > (Add the above new password)
+  - Goback to terminal where eksctl creation is completed
+- Go back local terminal where ec2 instance is running
+- Install kubectl in ec2 instance -> https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
+  - \$ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+  - \$ curl -o kubectl.sha256 https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl.sha256
+  - \$ chmod +x ./kubectl
+  - \$ mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+  - \$ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+  - \$ kubectl version --short --client
+  - \$ kubectl get nodes
+- Go back to Jenkins Blueocean UI
+- Edit the airbus-casestudy pipeline
+- Add next stage
+- Stage Name: Prpeare k8 Name Space
+  - Step
+  - Just add shell script
+- Stage Name: Deployment
+  - Steps:
+  - Change Current Directory -> deployment/eks/mongo
+  - Child steps
+  - Shell Script
+  - \$ kubectl apply -f eks-pv-pvc.yaml -n
+  - Add env -> K8NS: eks-training
+- Also do for rabbit mq
+- Anthorer stage
+  - Stage Name: Cleanup
+  - Waiting for interactive input
+  - MEssage: Have Test the application? This would initialize the cleanup after the conformation?
+  - Add step:
+  - shell script
+- which kubectl
+- Restart the instance
+- kubectl command found error -> KUBECTL: `~/bin`
+
+---
+
+# manual deployment
+
+- Open fresh new tab in local
+- \$ cd ~/tejas/workspace/vsc
+- \$ git clone https://github.com/tsabunkar/airbus-casestudy.git
+- \$ kubectl get nodes
+- \$ kubectl create namespace eks-training
+- \$ kubectl get namespaces
+- \$ cd airbus-casestudy/deployment/eks/mongo/ (you can see 2 files- eks-pv-pvc.yaml, eks-mongodb.yaml)
+- \$ kubectl apply -f eks-pv-pvc.yaml -n eks-training
+- \$ kubectl apply -f eks-mongodb.yaml -n eks-training
+- \$ kubectl get all -n eks-training
+- \$ cd ..
+- \$ cd rabbitmq
+- \$ kubectl apply -f rabbitmq.yaml -n eks-training
+- Goto Lens, verify the rabbitmq services (Network -> services)
+  - Catalog (app)
+  - (select) abuser15@tejas-cluster.ca-central-1.eksctl.io (right click connect)
+  - Network (tab) > Services
+  - Change the Namespace: eks-training (Right-top dropdown)
+  - (select) rabbitmq
+  - Copy the value of External IPs -> ae1d8aefceb19472daf414e58b2b9699-46681941.ca-central-1.elb.amazonaws.com (we got the ELB URL of rabbitmq)
+  - open the browser -> http://<elb-of-rabbitmq>:15672
+    - http://ae1d8aefceb19472daf414e58b2b9699-46681941.ca-central-1.elb.amazonaws.com:15672
+    - username: guest
+    - password: guest
+    - Queues (tab)
+    - Add a new queue (section)
+    - Name: verification-inputs-queue
+    - Add queue
+    - Add a new queue (section)
+    - Name: email-requests-queue
+    - Add queue
+    - Add a new queue (section)
+    - Name: verification-outputs-queue
+    - Add queue
+- NOW, BEFORE THE APP DEPLOYMENT, MODIFY THE ECR IMAGES ACROSS ALL YAML FILES
+- Go back local terminal (where you have pull the casestudy repo locally)
+- \$ cd ..
+- \$ sudo nano eks-calculation-offer-service.yaml
+  - Goto Amazon ECR > Repositories > (select) tejasv2-casestudy-calculation-service > Copy the Image URI
+  - paste under template -> spec -> containers -> image
+- \$ sudo nano eks-creditcard-identity-verification-response-daemon.yaml
+  - Goto Amazon ECR > Repositories > (select) tejasv2-creditcard-identity-verification-response-daemon > Copy the Image URI
+  - paste under template -> spec -> containers -> image
+- \$ sudo nano eks-creditcard-service.yaml
+  - Goto Amazon ECR > Repositories > (select) tejasv2-creditcard-service > Copy the Image URI
+  - paste under template -> spec -> containers -> image
+- \$ sudo nano eks-email-service.yaml
+  - Goto Amazon ECR > Repositories > (select) tejasv2-email-service > Copy the Image URI
+  - paste under template -> spec -> containers -> image
+  - Also update the AWS_ACCESS_KEY and AWS_ACCESS_SECRET_KEY with BASE-64 ENCODED values from `abuser15_accessKeys.csv`
+  - TO Encode use this website https://www.base64encode.org/
+    - AWS_ACCESS_KEY
+    - AWS_ACCESS_SECRET_KEY
+- \$ sudo nano eks-identity-verification-service.yaml
+  - Goto Amazon ECR > Repositories > (select) tejas-identity-verification-service > Copy the Image URI
+  - paste under template -> spec -> containers -> image
+- (For reference these above yaml files changes are under ./depolyment-files)
+
+---
+
+# Ingress Controller
+
+- All the services are exposed through ingress controller
+
+---

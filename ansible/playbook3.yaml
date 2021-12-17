@@ -1,0 +1,93 @@
+---
+- name: End to End Demonstration - Docker and Web Hosting
+  gather_facts: yes
+  hosts: productionservers
+  become: yes
+
+  tasks:
+    - name: Install Git
+      yum:
+        name: git
+        state: latest
+
+    - name: Install yum Utilities
+      yum:
+        name: yum-utils
+        state: latest
+
+    - name: Install Device Mapper Persistent Data
+      yum:
+        name: device-mapper-persistent-data
+        state: latest
+
+    - name: Install LVM2
+      yum:
+        name: lvm2
+        state: latest
+
+    - name: Add Docker Repository
+      get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+
+    - name: Enable Docker Edge Repository
+      ini_file:
+        dest: /etc/yum.repos.d/docker-ce.repo
+        section: "docker-ce-edge"
+        option: enabled
+        value: 0
+
+    - name: Enable Docker Test Repository
+      ini_file:
+        dest: /etc/yum.repos.d/docker-ce.repo
+        section: "dockerce-test"
+        option: enabled
+        value: 0
+
+    - name: Install Docker
+      package:
+        name: docker-ce
+        state: latest
+
+    - name: Start Docker Service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add User ansibleadmin to the Docker Group
+      user:
+        name: ansibleadmin
+        groups: docker
+        append: yes
+
+    - name: Install Python 3.6
+      yum:
+        name: python36
+        state: latest
+
+    - name: Configure pip for Docker
+      pip:
+        name: docker-py
+
+    - name: Pull HTTPD Docker Image
+      docker_image:
+        name: httpd
+        source: pull
+
+    - name: Clonse the Git Repository of Static Website
+      git:
+        repo: https://github.com/cloudacademy/static-website-example
+        clone: yes
+        dest: /var/www/html
+
+    - name: Run the Docker Container
+      docker_container:
+        name: mywebserver
+        image: httpd
+        exposed_ports:
+          - 80
+        ports:
+          - 4444:80
+        volumes:
+          - /var/www/html/:/usr/local/apache2/htdocs

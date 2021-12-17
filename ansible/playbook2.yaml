@@ -1,0 +1,9 @@
+---
+- hosts: productionservers
+  tasks:
+    - name: Load Secrets
+      include_vars: secrets.yaml
+
+    - name: Display and Bring back with Secret
+      debug:
+        msg: "The Value with Secret Information from the Node is : {{ mysecret }}"
