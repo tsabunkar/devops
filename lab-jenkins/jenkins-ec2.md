@@ -411,7 +411,7 @@
 - Save
 - Goto local Master terminal (Jenkins UI)
 - \$ sudo yum update
-- \$ sudo amazon-linux-extras install docker
+- \$ sudo amazon-linux-extras install docker <-- In the master-server (jenkins is running), Installing the docker s/w
 - \$ sudo service docker start
 - \$ sudo usermod -aG docker ec2-user
 - \$ sudo chmod 666 /var/run/docker.sock
